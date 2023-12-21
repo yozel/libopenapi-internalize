@@ -39,15 +39,12 @@ components:
             $ref: "#/components/parameters/Spec2ExampleSimpleX"
         Spec2ExampleSimple:
             $ref: "#/components/parameters/Spec2ExampleSimpleX"
+        Spec3ExampleRemote:
+            $ref: "#/components/parameters/Spec4ExampleSimple"
         Spec2ExampleRemote:
             $ref: "#/components/parameters/Spec3ExampleSimple"
         Spec2ExampleRemoteRemote:
             $ref: "#/components/parameters/Spec3ExampleRemote"
-        Spec2ExampleSimpleX:
-            name: example
-            in: query
-            schema:
-                type: string
         Spec3ExampleSimple:
             name: example
             in: query
@@ -58,5 +55,8 @@ components:
             in: query
             schema:
                 type: string
-        Spec3ExampleRemote:
-            $ref: "#/components/parameters/Spec4ExampleSimple"
+        Spec2ExampleSimpleX:
+            name: example
+            in: query
+            schema:
+                type: string

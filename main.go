@@ -72,45 +72,39 @@ func internalize(root *yaml.Node) error {
 
 	// replace all references with new references
 	return nodeWalk(nil, root, func(parentNode *yaml.Node, node *yaml.Node) error {
-		if node.Kind != yaml.MappingNode {
+		isRef, refAddrNode, refAddr := isNodeRefValue(node)
+		if !isRef {
 			return nil
 		}
 
-		for i := 0; i < len(node.Content); i += 2 {
-			if node.Content[i].Value != "$ref" {
-				continue
-			}
-			oldRefNode := node.Content[i+1]
-
-			// If the reference is a local reference, then we don't need to do anything.
-			if strings.Split(oldRefNode.Value, "#")[0] == "" {
-				continue
-			}
-
-			origin := rolodex.FindNodeOrigin(node)
-			if origin == nil {
-				return fmt.Errorf("unable to find origin for node")
-			}
-			oldRefFull := path.Join(path.Dir(origin.AbsoluteLocation), oldRefNode.Value)
-			if newRef, ok := mapping[oldRefFull]; ok {
-				oldRefNode.Value = newRef
-			} else {
-				// The reference is not an component, so the only option is resolving it with the rolodex
-				rolodex, err := genRolodexForNode(&yaml.Node{
-					Kind: yaml.DocumentNode,
-					Content: []*yaml.Node{
-						parentNode,
-					},
-					Line:   0,
-					Column: 0,
-				})
-				if err != nil {
-					return err
-				}
-				rolodex.Resolve()
-			}
-
+		// If the reference is a local reference, then we don't need to do anything.
+		if strings.HasPrefix(refAddr, "#") {
+			return nil
 		}
+
+		origin := rolodex.FindNodeOrigin(node)
+		if origin == nil {
+			return fmt.Errorf("unable to find origin for node")
+		}
+		oldRefFull := path.Join(path.Dir(origin.AbsoluteLocation), refAddr)
+		if newRef, ok := mapping[oldRefFull]; ok {
+			refAddrNode.Value = newRef
+		} else {
+			// The reference is not an component, so the only option is resolving it with the rolodex
+			rolodex, err := genRolodexForNode(&yaml.Node{
+				Kind: yaml.DocumentNode,
+				Content: []*yaml.Node{
+					parentNode,
+				},
+				Line:   0,
+				Column: 0,
+			})
+			if err != nil {
+				return err
+			}
+			rolodex.Resolve()
+		}
+
 		return nil
 	})
 }
@@ -287,4 +281,19 @@ func getOneNode(node *yaml.Node, path string) (*yaml.Node, error) {
 		return nil, fmt.Errorf("expected 1 node, got %d", len(r))
 	}
 	return r[0], nil
+}
+
+func isNodeRefValue(node *yaml.Node) (bool, *yaml.Node, string) {
+	if node == nil {
+		return false, nil, ""
+	}
+	n := utils.NodeAlias(node)
+	for i, r := range n.Content {
+		if i%2 == 0 {
+			if r.Value == "$ref" {
+				return true, n.Content[i+1], n.Content[i+1].Value
+			}
+		}
+	}
+	return false, nil, ""
 }
