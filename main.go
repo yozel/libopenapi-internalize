@@ -46,12 +46,12 @@ func internalize(root *yaml.Node) error {
 	// Create new components for all remote references and return a mapping of old reference to new reference
 	//
 	// Example output:
-	// /Users/yozel/Projects/vacuumx/spec2.yaml#/components/parameters/Spec2ExampleSimple -> #/components/parameters/Spec2ExampleSimpleX
-	// /Users/yozel/Projects/vacuumx/spec4.yaml#/components/parameters/Spec4ExampleSimple -> #/components/parameters/Spec4ExampleSimple
-	// /Users/yozel/Projects/vacuumx/spec2.yaml#/components/parameters/Spec2ExampleRemoteRemote -> #/components/parameters/Spec2ExampleRemoteRemote
-	// /Users/yozel/Projects/vacuumx/spec3.yaml#/components/parameters/Spec3ExampleSimple -> #/components/parameters/Spec3ExampleSimple
-	// /Users/yozel/Projects/vacuumx/spec3.yaml#/components/parameters/Spec3ExampleRemote -> #/components/parameters/Spec3ExampleRemote
-	// /Users/yozel/Projects/vacuumx/spec2.yaml#/components/parameters/Spec2ExampleRemote -> #/components/parameters/Spec2ExampleRemote
+	// /Users/yozel/Projects/libopenapi-internalize/spec2.yaml#/components/parameters/Spec2ExampleSimple -> #/components/parameters/Spec2ExampleSimpleX
+	// /Users/yozel/Projects/libopenapi-internalize/spec4.yaml#/components/parameters/Spec4ExampleSimple -> #/components/parameters/Spec4ExampleSimple
+	// /Users/yozel/Projects/libopenapi-internalize/spec2.yaml#/components/parameters/Spec2ExampleRemoteRemote -> #/components/parameters/Spec2ExampleRemoteRemote
+	// /Users/yozel/Projects/libopenapi-internalize/spec3.yaml#/components/parameters/Spec3ExampleSimple -> #/components/parameters/Spec3ExampleSimple
+	// /Users/yozel/Projects/libopenapi-internalize/spec3.yaml#/components/parameters/Spec3ExampleRemote -> #/components/parameters/Spec3ExampleRemote
+	// /Users/yozel/Projects/libopenapi-internalize/spec2.yaml#/components/parameters/Spec2ExampleRemote -> #/components/parameters/Spec2ExampleRemote
 	mapping := map[string]string{}
 	for _, ref := range getAllRefs(rolodex) {
 		if !ref.IsRemote {
