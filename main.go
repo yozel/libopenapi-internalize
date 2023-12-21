@@ -12,17 +12,29 @@ import (
 )
 
 func nodeWalk(index *index.SpecIndex, parentNode *yaml.Node, node *yaml.Node, do func(*yaml.Node, *yaml.Node) error) error {
-	do(parentNode, node)
+	err := do(parentNode, node)
+	if err != nil {
+		return err
+	}
 	switch node.Kind {
 	case yaml.DocumentNode:
-		nodeWalk(index, node, node.Content[0], do)
+		err = nodeWalk(index, node, node.Content[0], do)
+		if err != nil {
+			return err
+		}
 	case yaml.SequenceNode:
 		for _, child := range node.Content {
-			nodeWalk(index, node, child, do)
+			err = nodeWalk(index, node, child, do)
+			if err != nil {
+				return err
+			}
 		}
 	case yaml.MappingNode:
 		for i := 0; i < len(node.Content); i += 2 {
-			nodeWalk(index, node, node.Content[i+1], do)
+			err = nodeWalk(index, node, node.Content[i+1], do)
+			if err != nil {
+				return err
+			}
 		}
 	case yaml.ScalarNode:
 	case yaml.AliasNode:
@@ -147,7 +159,6 @@ func addAsNewComponent(root *yaml.Node, ref *index.Reference) (*index.Reference,
 	if err != nil {
 		return nil, err
 	}
-
 	for keys[itemName] {
 		itemName = itemName + "X"
 	}
@@ -225,7 +236,7 @@ func internalize(root *yaml.Node) error {
 	}
 
 	// replace all references with new references
-	nodeWalk(nil, nil, root, func(parentNode *yaml.Node, node *yaml.Node) error {
+	err = nodeWalk(nil, nil, root, func(parentNode *yaml.Node, node *yaml.Node) error {
 		if node.Kind != yaml.MappingNode {
 			return nil
 		}
@@ -243,7 +254,7 @@ func internalize(root *yaml.Node) error {
 
 			origin := rolodex.FindNodeOrigin(node)
 			if origin == nil {
-				panic("unable to find origin")
+				return fmt.Errorf("unable to find origin for node")
 			}
 			oldRefFull := path.Join(path.Dir(origin.AbsoluteLocation), oldRefNode.Value)
 			if newRef, ok := mapping[oldRefFull]; ok {
@@ -267,6 +278,7 @@ func internalize(root *yaml.Node) error {
 		}
 		return nil
 	})
+	if err != nil {
 
 	b, err := yaml.Marshal(root)
 	if err != nil {
