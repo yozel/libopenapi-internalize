@@ -1,0 +1,62 @@
+openapi: 3.1.0
+info:
+    x-asd-hello:
+        "bar": "baz"
+    title: Example API
+    version: 1.0.0
+paths:
+    /example:
+        options:
+            summary: Example endpoint
+            parameters:
+                TestSimple:
+                    name: example
+                    in: query
+                    schema:
+                        type:
+                            $ref: "#/components/parameters/TestSimple/schema/type"
+                TestSimple2:
+                    name: example
+                    in: query
+                    schema:
+                        type: {}
+        get:
+            summary: Example endpoint
+            parameters:
+                - $ref: "#/components/parameters/TestSimple"
+                - $ref: "#/components/parameters/Spec2ExampleSimpleX"
+                - $ref: "#/components/parameters/Spec2ExampleSimpleX"
+                - $ref: "#/components/parameters/Spec2ExampleRemote"
+                - $ref: "#/components/parameters/Spec2ExampleRemoteRemote"
+components:
+    parameters:
+        TestSimple:
+            name: example
+            in: query
+            schema:
+                type: string
+        TestRemote:
+            $ref: "#/components/parameters/Spec2ExampleSimpleX"
+        Spec2ExampleSimple:
+            $ref: "#/components/parameters/Spec2ExampleSimpleX"
+        Spec3ExampleRemote:
+            $ref: "#/components/parameters/Spec4ExampleSimple"
+        Spec2ExampleSimpleX:
+            name: example
+            in: query
+            schema:
+                type: string
+        Spec2ExampleRemoteRemote:
+            $ref: "#/components/parameters/Spec3ExampleRemote"
+        Spec3ExampleSimple:
+            name: example
+            in: query
+            schema:
+                type: string
+        Spec4ExampleSimple:
+            name: example
+            in: query
+            schema:
+                type: string
+        Spec2ExampleRemote:
+            $ref: "#/components/parameters/Spec3ExampleSimple"
