@@ -11,7 +11,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-
 func main() {
 	// read in an OpenAPI Spec to a byte array
 	specBytes, err := os.ReadFile("spec.yaml")
@@ -36,7 +35,7 @@ func main() {
 	}
 
 	fmt.Printf("%s", b)
-}``
+}
 
 func internalize(root *yaml.Node) error {
 	rolodex, err := genRolodexForNode(root)
@@ -44,6 +43,15 @@ func internalize(root *yaml.Node) error {
 		panic(err.Error())
 	}
 
+	// Create new components for all remote references and return a mapping of old reference to new reference
+	//
+	// Example output:
+	// /Users/yozel/Projects/vacuumx/spec2.yaml#/components/parameters/Spec2ExampleSimple -> #/components/parameters/Spec2ExampleSimpleX
+	// /Users/yozel/Projects/vacuumx/spec4.yaml#/components/parameters/Spec4ExampleSimple -> #/components/parameters/Spec4ExampleSimple
+	// /Users/yozel/Projects/vacuumx/spec2.yaml#/components/parameters/Spec2ExampleRemoteRemote -> #/components/parameters/Spec2ExampleRemoteRemote
+	// /Users/yozel/Projects/vacuumx/spec3.yaml#/components/parameters/Spec3ExampleSimple -> #/components/parameters/Spec3ExampleSimple
+	// /Users/yozel/Projects/vacuumx/spec3.yaml#/components/parameters/Spec3ExampleRemote -> #/components/parameters/Spec3ExampleRemote
+	// /Users/yozel/Projects/vacuumx/spec2.yaml#/components/parameters/Spec2ExampleRemote -> #/components/parameters/Spec2ExampleRemote
 	mapping := map[string]string{}
 	for _, ref := range getAllRefs(rolodex) {
 		if !ref.IsRemote {
@@ -60,6 +68,10 @@ func internalize(root *yaml.Node) error {
 		if newRef != nil {
 			mapping[ref.FullDefinition] = newRef.FullDefinition
 		}
+	}
+
+	for k, v := range mapping {
+		fmt.Printf("%s -> %s\n", k, v)
 	}
 
 	// replace all references with new references
