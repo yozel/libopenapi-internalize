@@ -71,7 +71,7 @@ func internalize(root *yaml.Node) error {
 	}
 
 	// replace all references with new references
-	return nodeWalk(nil, nil, root, func(parentNode *yaml.Node, node *yaml.Node) error {
+	return nodeWalk(nil, root, func(parentNode *yaml.Node, node *yaml.Node) error {
 		if node.Kind != yaml.MappingNode {
 			return nil
 		}
@@ -115,27 +115,27 @@ func internalize(root *yaml.Node) error {
 	})
 }
 
-func nodeWalk(index *index.SpecIndex, parentNode *yaml.Node, node *yaml.Node, do func(*yaml.Node, *yaml.Node) error) error {
+func nodeWalk(parentNode *yaml.Node, node *yaml.Node, do func(*yaml.Node, *yaml.Node) error) error {
 	err := do(parentNode, node)
 	if err != nil {
 		return err
 	}
 	switch node.Kind {
 	case yaml.DocumentNode:
-		err = nodeWalk(index, node, node.Content[0], do)
+		err = nodeWalk(node, node.Content[0], do)
 		if err != nil {
 			return err
 		}
 	case yaml.SequenceNode:
 		for _, child := range node.Content {
-			err = nodeWalk(index, node, child, do)
+			err = nodeWalk(node, child, do)
 			if err != nil {
 				return err
 			}
 		}
 	case yaml.MappingNode:
 		for i := 0; i < len(node.Content); i += 2 {
-			err = nodeWalk(index, node, node.Content[i+1], do)
+			err = nodeWalk(node, node.Content[i+1], do)
 			if err != nil {
 				return err
 			}
@@ -207,13 +207,6 @@ func parseComponentPath(path string) (string, string, error) {
 		return "", "", fmt.Errorf("invalid path")
 	}
 	return paths[0], paths[1], nil
-}
-
-func parsePath(path string) ([]string, error) {
-	if !strings.HasPrefix(path, "$.") {
-		return nil, fmt.Errorf("path must start with $. got %s", path)
-	}
-	return strings.Split(path, ".")[1:], nil
 }
 
 func getKeys(node *yaml.Node) (map[string]bool, error) {
