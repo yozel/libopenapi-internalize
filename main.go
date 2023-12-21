@@ -70,10 +70,6 @@ func internalize(root *yaml.Node) error {
 		}
 	}
 
-	for k, v := range mapping {
-		fmt.Printf("%s -> %s\n", k, v)
-	}
-
 	// replace all references with new references
 	return nodeWalk(nil, nil, root, func(parentNode *yaml.Node, node *yaml.Node) error {
 		if node.Kind != yaml.MappingNode {
