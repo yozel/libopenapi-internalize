@@ -11,6 +11,102 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+
+func main() {
+	// read in an OpenAPI Spec to a byte array
+	specBytes, err := os.ReadFile("spec.yaml")
+	if err != nil {
+		panic(err.Error())
+	}
+
+	rootNode := &yaml.Node{}
+	err = yaml.Unmarshal(specBytes, rootNode)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	err = internalize(rootNode)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	b, err := yaml.Marshal(rootNode)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	fmt.Printf("%s", b)
+}``
+
+func internalize(root *yaml.Node) error {
+	rolodex, err := genRolodexForNode(root)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	mapping := map[string]string{}
+	for _, ref := range getAllRefs(rolodex) {
+		if !ref.IsRemote {
+			continue
+		}
+		_, _, err := parseComponentPath(ref.Path)
+		if err != nil {
+			continue
+		}
+		newRef, err := addAsNewComponent(root, ref)
+		if err != nil {
+			return fmt.Errorf("unable to add as new component %w", err)
+		}
+		if newRef != nil {
+			mapping[ref.FullDefinition] = newRef.FullDefinition
+		}
+	}
+
+	// replace all references with new references
+	return nodeWalk(nil, nil, root, func(parentNode *yaml.Node, node *yaml.Node) error {
+		if node.Kind != yaml.MappingNode {
+			return nil
+		}
+
+		for i := 0; i < len(node.Content); i += 2 {
+			if node.Content[i].Value != "$ref" {
+				continue
+			}
+			oldRefNode := node.Content[i+1]
+
+			// If the reference is a local reference, then we don't need to do anything.
+			if strings.Split(oldRefNode.Value, "#")[0] == "" {
+				continue
+			}
+
+			origin := rolodex.FindNodeOrigin(node)
+			if origin == nil {
+				return fmt.Errorf("unable to find origin for node")
+			}
+			oldRefFull := path.Join(path.Dir(origin.AbsoluteLocation), oldRefNode.Value)
+			if newRef, ok := mapping[oldRefFull]; ok {
+				oldRefNode.Value = newRef
+			} else {
+				// The reference is not an component, so the only option is resolving it with the rolodex
+				rolodex, err := genRolodexForNode(&yaml.Node{
+					Kind: yaml.DocumentNode,
+					Content: []*yaml.Node{
+						parentNode,
+					},
+					Line:   0,
+					Column: 0,
+				})
+				if err != nil {
+					return err
+				}
+				rolodex.Resolve()
+			}
+
+		}
+		return nil
+	})
+}
+
 func nodeWalk(index *index.SpecIndex, parentNode *yaml.Node, node *yaml.Node, do func(*yaml.Node, *yaml.Node) error) error {
 	err := do(parentNode, node)
 	if err != nil {
@@ -190,99 +286,4 @@ func getOneNode(node *yaml.Node, path string) (*yaml.Node, error) {
 		return nil, fmt.Errorf("expected 1 node, got %d", len(r))
 	}
 	return r[0], nil
-}
-
-func main() {
-	// read in an OpenAPI Spec to a byte array
-	specBytes, err := os.ReadFile("spec.yaml")
-	if err != nil {
-		panic(err.Error())
-	}
-
-	rootNode := &yaml.Node{}
-	err = yaml.Unmarshal(specBytes, rootNode)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	err = internalize(rootNode)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	b, err := yaml.Marshal(rootNode)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	fmt.Printf("%s", b)
-}
-
-func internalize(root *yaml.Node) error {
-	rolodex, err := genRolodexForNode(root)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	mapping := map[string]string{}
-	for _, ref := range getAllRefs(rolodex) {
-		if !ref.IsRemote {
-			continue
-		}
-		_, _, err := parseComponentPath(ref.Path)
-		if err != nil {
-			continue
-		}
-		newRef, err := addAsNewComponent(root, ref)
-		if err != nil {
-			return fmt.Errorf("unable to add as new component %w", err)
-		}
-		if newRef != nil {
-			mapping[ref.FullDefinition] = newRef.FullDefinition
-		}
-	}
-
-	// replace all references with new references
-	return nodeWalk(nil, nil, root, func(parentNode *yaml.Node, node *yaml.Node) error {
-		if node.Kind != yaml.MappingNode {
-			return nil
-		}
-
-		for i := 0; i < len(node.Content); i += 2 {
-			if node.Content[i].Value != "$ref" {
-				continue
-			}
-			oldRefNode := node.Content[i+1]
-
-			// If the reference is a local reference, then we don't need to do anything.
-			if strings.Split(oldRefNode.Value, "#")[0] == "" {
-				continue
-			}
-
-			origin := rolodex.FindNodeOrigin(node)
-			if origin == nil {
-				return fmt.Errorf("unable to find origin for node")
-			}
-			oldRefFull := path.Join(path.Dir(origin.AbsoluteLocation), oldRefNode.Value)
-			if newRef, ok := mapping[oldRefFull]; ok {
-				oldRefNode.Value = newRef
-			} else {
-				// The reference is not an component, so the only option is resolving it with the rolodex
-				rolodex, err := genRolodexForNode(&yaml.Node{
-					Kind: yaml.DocumentNode,
-					Content: []*yaml.Node{
-						parentNode,
-					},
-					Line:   0,
-					Column: 0,
-				})
-				if err != nil {
-					return err
-				}
-				rolodex.Resolve()
-			}
-
-		}
-		return nil
-	})
 }
