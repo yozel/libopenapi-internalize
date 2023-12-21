@@ -209,6 +209,13 @@ func main() {
 	if err != nil {
 		panic(err.Error())
 	}
+
+	b, err := yaml.Marshal(rootNode)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	fmt.Printf("%s", b)
 }
 
 func internalize(root *yaml.Node) error {
@@ -236,7 +243,7 @@ func internalize(root *yaml.Node) error {
 	}
 
 	// replace all references with new references
-	err = nodeWalk(nil, nil, root, func(parentNode *yaml.Node, node *yaml.Node) error {
+	return nodeWalk(nil, nil, root, func(parentNode *yaml.Node, node *yaml.Node) error {
 		if node.Kind != yaml.MappingNode {
 			return nil
 		}
@@ -278,15 +285,4 @@ func internalize(root *yaml.Node) error {
 		}
 		return nil
 	})
-	if err != nil {
-		return err
-	}
-
-	b, err := yaml.Marshal(root)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	fmt.Printf("%s", b)
-	return nil
 }
