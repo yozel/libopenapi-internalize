@@ -1,0 +1,11 @@
+{
+  "hello": {
+    "type": "object",
+    "description": "asd",
+    "properties": {},
+    "additionalProperties": true
+  },
+  "foo": {
+    "bar": "baz"
+  }
+}

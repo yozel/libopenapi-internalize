@@ -1,0 +1,43 @@
+openapi: 3.1.0
+info:
+  x-asd-hello:
+    $ref: "./object_c.json#/foo"
+    asd: hello
+  title: Example API
+  version: 1.0.0
+paths:
+  /example:
+    options:
+      summary: Example endpoint
+      parameters:
+        TestSimple:
+          name: example
+          in: query
+          schema:
+            type:
+              $ref: "#/components/parameters/TestSimple/schema/type"
+        TestSimple2:
+          name: example
+          in: query
+          schema:
+            type:
+              $ref: "./spec2.yaml#/components/parameters/Spec2ExampleSimple/schema/type"
+    get:
+      summary: Example endpoint
+      parameters:
+        - $ref: "#/components/parameters/TestSimple"
+        - $ref: "./spec2.yaml#/components/parameters/Spec2ExampleSimple"
+        - $ref: "./spec2.yaml#/components/parameters/Spec2ExampleSimple"
+        - $ref: "./spec2.yaml#/components/parameters/Spec2ExampleRemote"
+        - $ref: "./spec2.yaml#/components/parameters/Spec2ExampleRemoteRemote"
+components:
+  parameters:
+    TestSimple:
+      name: example
+      in: query
+      schema:
+        type: string
+    TestRemote:
+      $ref: "./spec2.yaml#/components/parameters/Spec2ExampleSimple"
+    Spec2ExampleSimple:
+      $ref: "./spec2.yaml#/components/parameters/Spec2ExampleSimple"

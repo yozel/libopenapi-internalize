@@ -1,0 +1,15 @@
+openapi: 3.1.0
+info:
+  title: Example API
+  version: 1.0.0
+
+paths: {}
+components:
+  parameters:
+    Spec3ExampleSimple:
+      name: example
+      in: query
+      schema:
+        type: string
+    Spec3ExampleRemote:
+      $ref: "./spec4.yaml#/components/parameters/Spec4ExampleSimple"

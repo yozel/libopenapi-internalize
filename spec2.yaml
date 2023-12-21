@@ -1,0 +1,22 @@
+openapi: 3.1.0
+info:
+  x-asd-hello:
+    test:
+      world:
+        - yoo:
+          $ref: "./object_c.json#/hello"
+  title: Example API
+  version: 1.0.0
+
+paths: {}
+components:
+  parameters:
+    Spec2ExampleSimple:
+      name: example
+      in: query
+      schema:
+        type: string
+    Spec2ExampleRemote:
+      $ref: "./spec3.yaml#/components/parameters/Spec3ExampleSimple"
+    Spec2ExampleRemoteRemote:
+      $ref: "./spec3.yaml#/components/parameters/Spec3ExampleRemote"
