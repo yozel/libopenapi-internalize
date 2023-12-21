@@ -279,6 +279,8 @@ func internalize(root *yaml.Node) error {
 		return nil
 	})
 	if err != nil {
+		return err
+	}
 
 	b, err := yaml.Marshal(root)
 	if err != nil {
