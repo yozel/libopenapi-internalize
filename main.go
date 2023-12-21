@@ -87,26 +87,31 @@ func internalize(root *yaml.Node) error {
 			return fmt.Errorf("unable to find origin for node")
 		}
 		oldRefFull := path.Join(path.Dir(origin.AbsoluteLocation), refAddr)
-		if newRef, ok := mapping[oldRefFull]; ok {
+		newRef, ok := mapping[oldRefFull]
+		if ok {
 			refAddrNode.Value = newRef
-		} else {
-			// The reference is not an component, so the only option is resolving it with the rolodex
-			rolodex, err := genRolodexForNode(&yaml.Node{
-				Kind: yaml.DocumentNode,
-				Content: []*yaml.Node{
-					parentNode,
-				},
-				Line:   0,
-				Column: 0,
-			})
-			if err != nil {
-				return err
-			}
-			rolodex.Resolve()
+			return nil
 		}
 
-		return nil
+		// The reference is not an component, so the only option is resolving it with the rolodex
+		return resolveWithRolodex(parentNode)
 	})
+}
+
+func resolveWithRolodex(node *yaml.Node) error {
+	rolodex, err := genRolodexForNode(&yaml.Node{
+		Kind: yaml.DocumentNode,
+		Content: []*yaml.Node{
+			node,
+		},
+		Line:   0,
+		Column: 0,
+	})
+	if err != nil {
+		return err
+	}
+	rolodex.Resolve()
+	return nil
 }
 
 func nodeWalk(parentNode *yaml.Node, node *yaml.Node, do func(*yaml.Node, *yaml.Node) error) error {
